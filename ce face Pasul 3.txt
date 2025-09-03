@@ -1,0 +1,75 @@
+Codul își dă seama că trebuie să înlocuiască "calitatile-unui-lider" cu "de-ce-suntem-obligati-sa-folosim-surse-bibliografice-in-teza-de-licenta" prin procesul de identificare a corespondentului românesc real, nu bazându-se pe ce există deja în secțiunea FLAGS.
+
+În exemplul tău, funcția `find_real_ro_correspondent()` ar proceda astfel:
+
+1. **Verifică titlurile** - Extrage titlul din fișierul englezesc ("Why Are We Required To Use Bibliographical Sources In Our Bachelor's Thesis?") și caută fișiere românești cu titluri similare. 
+
+2. **Calculează similitudinea** - Pentru fiecare fișier românesc, calculează un scor de similitudine între titluri. Titlul românesc "De ce suntem obligați să folosim surse bibliografice în teza de licență?" are un scor de similitudine foarte ridicat cu titlul englezesc.
+
+3. **Detectează potrivirea** - Când găsește fișierul românesc cu cel mai bun scor de similitudine (în acest caz, "de-ce-suntem-obligati-sa-folosim-surse-bibliografice-in-teza-de-licenta.html"), îl consideră corespondentul corect.
+
+4. **Actualizează FLAGS** - După identificarea corespondentului real, funcția `update_flags_section()` compară link-ul românesc găsit ("de-ce-suntem-obligati-sa-folosim-surse-bibliografice-in-teza-de-licenta") cu cel existent în FLAGS ("calitatile-unui-lider"). Cum acestea nu se potrivesc, codul înlocuiește link-ul vechi cu cel nou în secțiunea FLAGS.
+
+În esență, codul face potrivirea prin compararea conținutului real al fișierelor (în special a titlurilor), nu prin ce este specificat în FLAGS. FLAGS este doar actualizat pentru a reflecta corespondența reală.
+
+---------
+
+Ai dreptate, scorul de similitudine este esențial, dar nu se bazează pe traduceri directe. Funcția `calculate_similarity()` din cod lucrează astfel:
+
+1. **Normalizarea textelor**:
+   - Convertește ambele texte la lowercase
+   - Elimină diacriticele folosind biblioteca `unidecode` (transformă "ă", "ș", "ț" în "a", "s", "t")
+   - Împarte textele în seturi de cuvinte folosind expresii regulate
+
+2. **Calculul similarității**:
+   - Identifică cuvintele comune între cele două seturi
+   - Calculează raportul: numărul de cuvinte comune / numărul maxim de cuvinte din oricare set
+
+Funcționează pentru că:
+
+1. Multe cuvinte în română și engleză au rădăcini similare sau chiar identice după eliminarea diacriticelor
+2. Structura titlurilor este adesea similară între versiunile în română și engleză
+3. Termeni specifici (cum ar fi "bibliografice"/"bibliographical", "licență"/"bachelor") rămân destul de similari
+
+În exemplul tău:
+- "De ce suntem obligați să folosim surse bibliografice în teza de licență?" 
+- "Why Are We Required To Use Bibliographical Sources In Our Bachelor's Thesis?"
+
+După normalizare, multe cuvinte cheie vor fi similare: "bibliografice"/"bibliographical", "surse"/"sources", "teza"/"thesis", ceea ce duce la un scor de similitudine suficient de mare pentru a stabili corespondența.
+
+Metoda funcționează surprinzător de bine pentru perechi de articole care sunt traduceri unul al altuia, chiar fără a folosi un sistem de traducere.
+
+--------
+Codul calculează scorul de similitudine folosind o metodă foarte simplă, care nu implică traduceri. Mai exact, funcția `calculate_similarity` face următoarele:
+
+1. **Normalizare:** Ambele texte sunt transformate în litere mici și se elimină diacriticele (folosind `unidecode`), astfel încât "ș" să devină "s" și așa mai departe.
+
+2. **Tokenizare:** Se extrag toate cuvintele din texte (prin expresii regulate), rezultând două seturi de cuvinte.
+
+3. **Calculul suprapunerii:** Se determină intersecția celor două seturi de cuvinte și se calculează raportul dintre numărul de cuvinte comune și numărul maxim de cuvinte din oricare din texte.
+
+Astfel, scorul de similitudine reflectă cât de multe cuvinte au în comun textele comparate, fără a efectua vreo traducere. Această metodă se bazează doar pe suprapunerea lexicală, ceea ce înseamnă că, în absența traducerii, efectiv nu se compară semnificațiile sau conceptele, ci doar forma scrisă a cuvintelor. 
+
+În cazul în care textele sunt în limbi diferite (cum ar fi un titlu în engleză și unul în română), metoda se bazează pe suprapunerea elementelor lexicale comune, ceea ce poate funcționa doar dacă există termeni similari sau nume proprii care să apară în ambele variante. Dacă nu există astfel de elemente comune, scorul va fi scăzut, iar codul va căuta alte indicii pentru a identifica corespondentul.
+-----------
+Da, absolut. Codul ia în calcul numărul de cuvinte din ambele texte când calculează scorul de similitudine.
+
+Da, codul ia în calcul numărul de cuvinte din fiecare text. Mai exact, după ce extrage cuvintele din textul 1 și textul 2, codul formează două seturi (fără duplicate). Apoi se calculează intersecția celor două seturi (cuvintele comune) și se împarte numărul cuvintelor comune la numărul maxim de cuvinte din oricare din cele două seturi. Acest lucru normalizează scorul, astfel încât să fie între 0 (texte complet diferite) și 1 (texte identice), ținând cont de lungimea fiecărui text.
+
+Dacă te uiți la funcția `calculate_similarity()`, partea cheie este:
+
+```python
+common_words = words1.intersection(words2)
+return len(common_words) / max(len(words1), len(words2))
+```
+
+Scorul este calculat ca raportul dintre:
+- Numărul de cuvinte comune (intersecția seturilor)
+- Numărul maxim de cuvinte din oricare dintre cele două texte
+
+Folosind `max(len(words1), len(words2))` la numitor, codul normalizează scorul în funcție de textul mai lung, ceea ce înseamnă că:
+
+1. Dacă un titlu este foarte scurt iar celălalt foarte lung, chiar dacă toate cuvintele din textul scurt se regăsesc în textul lung, scorul va fi totuși mic
+2. Scorul maxim (1.0) se atinge doar când ambele texte conțin exact aceleași cuvinte
+
+Această normalizare este importantă pentru a evita potrivirile false bazate doar pe câteva cuvinte comune când unul dintre texte este mult mai lung decât celălalt.
