@@ -1,0 +1,58 @@
+De facut un cod in Python cu urmatoarele cerinte:
+
+am un fisier bebe.docx si un fisier index.html
+
+bebe.docx contine un text de felul:
+
+TITLU (pe la jumatea primei linii) si mai jos, sub el, "Corpul articolului"
+
+
+TITLUL oricarui articol din bebe.docx poate fi identificat astfel: se afla pe la jumatea oricarei linii, nu contine dupa el absolut nimic, niciun cuvant si niciun semn de punctuatie. Vreau sa fie copiat in index.html in locul lui XXX din tagul:
+ <title>XXX</title> si, totodata sa fie copiat in locul lui XXX din tagul <td><h1 class="den_articol" itemprop="name">XXX</h1></td>  astfel:
+ 
+<title>XXX</title>
+<td><h1 class="den_articol" itemprop="name">XXX</h1></td>
+
+Titlul trebuie despartit prin cuvinte, printr-o liniuta "-" si atasat in ZZZ in urmatoarele locuri din index.html:
+
+<link rel="canonical" href="https://neculaifantanaru.com/en/zzz.html" />
+title="fr" alt="fr" width="28" height="19" /></a>&nbsp; <a href="https://neculaifantanaru.com/en/zzz.html">
+
+Vreau sa transformi din diacrtice in text normal atunci cand faci titlul html
+
+<!-- ARTICOL START -->
+<div align="justify">
+        <table width="552" border="0">
+          <tr>
+            <td><h1 class="den_articol" itemprop="name">XXX</h1></td>
+          </tr>
+          <tr>
+            <td class="text_dreapta">On September 19, 2010, in <a href="https://neculaifantanaru.com/en/real-leadership.html" title="View all articles from Real leadership" class="external" rel="category tag">Real Leadership</a>, by Neculai Fantanaru</td>
+          </tr>
+        </table>
+<!-- SASA-1 -->
+ YYY
+<!-- SASA-2 -->
+    </div>
+    <p align="justify" class="text_obisnuit style3">&nbsp;</p>
+<!-- ARTICOL FINAL -->
+
+
+
+Vreau sa fac parsing, sa copiez datele din bebe.docx in index.html in felul:
+
+
+
+Dupa ce-ai facut toate schimbarile in
+
+<meta name="description" content="444">  unde 444 reprezinta toate tagurile propozitiile care au <p class="text_obisnuit2">(.*?)</p>
+
+"Corpul articolului" din bebe.docx sa fie copiat intre cele doua comentarii, in locul lui YYY
+
+<!-- ARTICOL START -->
+YYY
+<!-- ARTICOL FINAL -->
+
+Fiecare propozitie din "Corpul articolului" trebuie sa fie incadrata in tagul <p class="text_obisnuit"></p>
+
+Fiecare propozitie din "Corpul articolului" care incepe cu "Leadership:" trebuie sa fie incadrata in tagul <p class="text_obisnuit2"></p>
