@@ -219,56 +219,123 @@ def process_files():
     needs_reset = bool(files_without_id or out_of_range_ids or duplicate_ids)
 
     if needs_reset:
-        safe_print("\nS-au detectat probleme cu ID-urile care necesită resetare.")
+        safe_print("\nS-au detectat probleme cu ID-urile care necesită corectare.")
+    else:
+        safe_print("\nNu s-au detectat probleme cu ID-urile. ID-urile existente vor fi păstrate.")
 
-    # Process files to reassign IDs sequentially
-    safe_print("\n=== REATRIBUIRE ID-URI ===")
-    current_id = 1
+    # Process files to fix problematic IDs and assign IDs to files without ID
+    safe_print("\n=== CORECTARE ID-URI ===")
+    
+    # Find the maximum existing ID to start assigning new IDs from
+    max_existing_id = 0
+    if id_to_files:
+        max_existing_id = max(id_to_files.keys())
+    
+    # Track which IDs are already used (for files that keep their IDs)
+    used_ids = set()
+    
+    # First pass: Keep valid IDs for files that don't have problems
     all_files_sorted = sorted(all_files, key=lambda x: os.path.basename(x).lower())
-
+    
+    # Build a map of filename to file info
+    file_info = {}
     for file_path in all_files_sorted:
         filename = os.path.basename(file_path)
-        safe_print(f"Procesez: {filename}")
-
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
         except UnicodeDecodeError:
             with open(file_path, 'r', encoding='latin-1') as f:
                 content = f.read()
-
-        # Get existing ID for reporting
-        existing_id = None
+        
         matches = id_pattern.findall(content)
-        if matches:
-            existing_id = int(matches[0])
-
-        # Replace with new sequential ID
-        new_content = re.sub(
-            r'<!-- \s*\$item_id\s*=\s*\d+;.*?-->',
-            f'<!-- $item_id = {current_id}; // Replace that with your rating id -->',
-            content
+        existing_id = int(matches[0]) if matches else None
+        
+        # Determine if this file has problems
+        has_problem = (
+            existing_id is None or  # No ID
+            existing_id > MAX_ID or  # Out of range
+            (existing_id in duplicate_ids and filename in duplicate_ids[existing_id])  # Duplicate ID
         )
-
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(new_content)
-
-        if existing_id and existing_id != current_id:
-            safe_print(f"  ID modificat: {existing_id} -> {current_id}")
+        
+        file_info[file_path] = {
+            'filename': filename,
+            'content': content,
+            'existing_id': existing_id,
+            'has_problem': has_problem
+        }
+        
+        # Mark ID as used if it's valid and not a duplicate
+        if existing_id and not has_problem and existing_id not in duplicate_ids:
+            used_ids.add(existing_id)
+    
+    # Second pass: Fix problematic files
+    current_id = 1
+    files_fixed = 0
+    files_kept = 0
+    
+    for file_path in all_files_sorted:
+        info = file_info[file_path]
+        filename = info['filename']
+        existing_id = info['existing_id']
+        has_problem = info['has_problem']
+        content = info['content']
+        
+        if has_problem:
+            # Find next available ID
+            while current_id in used_ids or current_id > MAX_ID:
+                current_id += 1
+            
+            id_comment = f'<!-- $item_id = {current_id}; // Replace that with your rating id -->'
+            
+            # If file had no ID, add it
+            if existing_id is None:
+                # Find a good place to insert the ID (after <html> tag)
+                html_match = re.search(r'(<html[^>]*>)', content, re.IGNORECASE)
+                if html_match:
+                    insert_pos = html_match.end()
+                    new_content = content[:insert_pos] + '\n' + id_comment + content[insert_pos:]
+                else:
+                    # Try to insert at the beginning
+                    new_content = id_comment + '\n' + content
+            else:
+                # Replace existing ID
+                new_content = re.sub(
+                    r'<!-- \s*\$item_id\s*=\s*\d+;.*?-->',
+                    id_comment,
+                    content
+                )
+            
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(new_content)
+            
+            if existing_id:
+                safe_print(f"  {filename}: ID corectat {existing_id} -> {current_id}")
+            else:
+                safe_print(f"  {filename}: ID atribuit {current_id}")
+            
+            used_ids.add(current_id)
+            current_id += 1
+            files_fixed += 1
         else:
-            safe_print(f"  ID atribuit: {current_id}")
-
-        current_id += 1
+            # Keep existing ID
+            safe_print(f"  {filename}: ID păstrat {existing_id}")
+            files_kept += 1
 
     # Update tracking file with the new maximum ID
-    new_max_id = current_id - 1
+    if used_ids:
+        new_max_id = max(used_ids)
+    else:
+        new_max_id = current_id - 1 if current_id > 1 else 0
     find_and_update_tracking_file(tracking_dir, new_max_id)
 
     safe_print("\n" + "="*50)
     safe_print("REZUMAT FINAL:")
     safe_print("="*50)
     safe_print(f"Total fișiere procesate: {len(all_files)}")
-    safe_print(f"Ultimul ID atribuit: {new_max_id}")
+    safe_print(f"Fișiere cu ID-uri păstrate: {files_kept}")
+    safe_print(f"Fișiere cu ID-uri corectate/atribuite: {files_fixed}")
+    safe_print(f"Ultimul ID folosit: {new_max_id}")
     safe_print("="*50)
 
     # NEW: Run paragraph spacing cleanup after ID processing
