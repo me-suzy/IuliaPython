@@ -162,6 +162,11 @@ def process_html_file(file_path, priority_folder, individual_files_folder, base_
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
 
+        # Verifică dacă fișierul a fost deja procesat (are deja structura cu imagini)
+        if 'article-card-new' in content:
+            print(f"  → SKIP: {os.path.basename(file_path)} - are deja structura article-card-new")
+            return
+
         original_content = content
 
         # Adaugă CSS dacă nu există
@@ -403,9 +408,9 @@ def main():
         "leadership-quantum-xx.html"
     ]
 
-    # Căile folderelor - DOAR DOUĂ FOLDERE ACUM
-    priority_folder = r"c:\Folder1\fisiere_gata"                                    # Fișierele categorii
-    individual_files_folder = r"e:\Carte\BB\17 - Site Leadership\Principal 2022\en"  # Fișierele individuale pentru imagini/lead
+    # Căile folderelor - FOLDERUL PRINCIPAL EN
+    priority_folder = r"e:\Carte\BB\17 - Site Leadership\Principal 2022\en"          # Fișierele categorii + individuale
+    individual_files_folder = r"e:\Carte\BB\17 - Site Leadership\Principal 2022\en"  # Același folder pentru imagini/lead
 
     print("Începe procesarea cu căutare DOAR în foldere locale...")
     print(f"Folder prioritar (categorii): {priority_folder}")
