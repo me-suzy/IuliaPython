@@ -7,6 +7,11 @@ le traduce cu Claude API si le duce prin toti pasii (Pasul 0 - Pasul 5) pana in 
 - Dublu-click pe **TRADUCE TOT - automat.bat**.
 - La final scrie `GATA` si unde este `raport.txt`. Apoi se porneste `bebe-metoda-1-en-NOU.bat`.
 
+## Din editorul Mini Dreamweaver
+- Butonul **Translate** (langa „Trimite E-mail”) cauta articolele netraduse, cere confirmarea,
+  porneste scriptul prin **TRADUCE TOT - din editor.bat** si afiseaza jurnalul in timp real.
+- Editorul foloseste `--doar-lista` (doar lista articolelor netraduse) si citeste jurnalul pana la marcajul `[[SFARSIT cod=N]]`.
+
 ## Cheia API
 - Cheia **nu** este in acest repository si nu se scrie in script.
 - La prima rulare (sau cu **Schimba cheia API.bat**) se deschide o fereastra in care se lipeste cheia.

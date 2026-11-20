@@ -739,7 +739,11 @@ def main():
     ap.add_argument('--reia', nargs='?', const='ULTIMA', help='continua o rulare (ultima, sau numele folderului ei)')
     ap.add_argument('--pana-la', choices=PASI, help='opreste dupa acest pas')
     ap.add_argument('--schimba-cheia', action='store_true', help='deschide fereastra pentru o cheie API noua')
+    ap.add_argument('--doar-lista', action='store_true', help='afiseaza doar articolele netraduse (JSON) si iese')
     a = ap.parse_args()
+    if a.doar_lista:
+        print(json.dumps({'netraduse': gaseste_netraduse()}, ensure_ascii=False))
+        return
     os.makedirs(WORK_ROOT, exist_ok=True)
     if a.schimba_cheia and not (a.lista or a.fisiere or a.reia):
         print('Cheia API a fost schimbata.' if asigura_cheia(True) else 'Cheia nu a fost schimbata.')
@@ -803,4 +807,17 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    cod = 0
+    try:
+        main()
+    except SystemExit as e:  # mesajele sys.exit('...') apar si in jurnal, inaintea marcajului de final
+        if isinstance(e.code, str):
+            print(e.code, flush=True); cod = 1
+        else:
+            cod = e.code or 0
+    except Exception as e:
+        import traceback
+        traceback.print_exc(file=sys.stdout); cod = 1
+    if '--sfarsit' in sys.argv or os.environ.get('TRADUCE_TOT_MARCAJ'):
+        print(f'[[SFARSIT cod={cod}]]', flush=True)
+    sys.exit(cod)
